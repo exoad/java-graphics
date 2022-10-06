@@ -250,10 +250,10 @@ public class SquareDisplay {
 	public static class DeepFrame extends JFrame implements Runnable {
 		public DeepFrame(JComponent rootContent) {
 			super();
-			setTitle("shittygl 1.12.2 ~ exoad");
+			setTitle("test-squares_ ~ exoad");
 			setPreferredSize(new Dimension(rootContent.getPreferredSize().width + CONFIG[3] + 300, rootContent.getPreferredSize().height + CONFIG[2] + 400));
 			try {
-				setIconImage(ImageIO.read(new File("./uwu.png")));
+				setIconImage(ImageIO.read(new File("../uwu.png")));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

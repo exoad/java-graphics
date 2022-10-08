@@ -22,6 +22,10 @@ public class LoadingSquares {
         300, // DEFAULT ANALYTICS_CONTENT WIDTH
         250, // DEFAULT ANALYTICS_CONTENT HEIGHT
         15, // MILLIS FOR DELAY OF EACH ROOT CONTENT PAINT TO PANE (translates not directly to FPS)
+        30, // MILLIS FOR DELAY OF EACH ROOT CONTNET BUFFER TO PAINT (translates not directly to FPS)
+        15, // WIDTH & HEIGHT OF INNER SQUARE (FILLED_SQUARE)
+        20, // WIDTH & HEIGHT OF OUTER SQUARE (OUTLINED_SQUARE)
+        80, // SPEED PER DEGREE OF INNER ROTATION SQUARE
     };
     
     public static final Color [] COLORS = {
@@ -31,11 +35,23 @@ public class LoadingSquares {
     
     public static class RootContent extends JPanel {
         private transient BufferedImage buffImg;
+        private float lastRotation = 0.1111F, d1 = (float) Math.PI, d2 = (float) Math.PI;
         
         public RootContent() {
             setPreferredSize(new Dimension(CONFIG[0], CONFIG[1]));
             setOpaque(true);
-            paintTimer.interrupt();
+            setBackground(Color.WHITE);
+
+            buffImg = new BufferedImage(CONFIG[0], CONFIG[1], BufferedImage.TYPE_INT_RGB);
+            
+            Timer bufferWorker = new Timer(CONFIG[5], new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    alive();
+                }
+            });
+            bufferWorker.setRepeats(true);
+            
             Timer paintWorker = new Timer(CONFIG[4], new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -44,14 +60,38 @@ public class LoadingSquares {
             });
             paintWorker.setRepeats(true);
             paintWorker.start();
+            bufferWorker.start();
         }
         
+        private synchronized void alive() {
+            BufferedImage temp = new BufferedImage(buffImg.getWidth(), buffImg.getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = temp.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            AffineTransform a = new AffineTransform();
+            AffineTransform a2 = new AffineTransform();
+            
+            Rectangle filledRect = new Rectangle(0, getHeight() / 2, CONFIG[6], CONFIG[6]);
+            a.rotate(lastRotation, filledRect.getX() + filledRect.getWidth() / 2, filledRect.getY() + filledRect.getHeight() / 2);
+            
+            lastRotation = lastRotation % (Math.PI * 2) == 0 ? 0.11111F : lastRotation + d1 / CONFIG[8];
+            System.out.println(lastRotation);
+            
+            g.setColor(COLORS[0]);
+            g.fill(a.createTransformedShape(filledRect));
+            
+            g.dispose();
+            
+            buffImg = temp;
+            temp = null;
+            bufferTimer.interrupt();
+        }
         
         @Override
         public void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
-            
-            
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                
+            g2.drawImage(buffImg, null, (getWidth() - buffImg.getWidth()) / 2, (getHeight() - buffImg.getHeight()) / 2);
             
             paintTimer.interrupt();
             framesCount = framesCount.add(BigInteger.ONE);
